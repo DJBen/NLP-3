@@ -39,6 +39,33 @@ public class SpeechRec {
         return logprob;
     }
 
+    public static double sentenceLogLikelihoodBigram(String sentence, BackoffAddLambdaLanguageModel lm) {
+        double logprob = 0.0;
+
+        String y = Constants.BOS;
+
+        for (String z : sentence.trim().split("\\s+")) {
+            if (!lm.vocab.contains(z)) z = Constants.OOV;
+            logprob += Math.log(lm.prob(y, z));
+            y = z;
+        }
+        logprob += Math.log(lm.prob(y, Constants.EOS));
+
+        return logprob;
+    }
+
+    public static double sentenceLogLikelihoodUnigram(String sentence, BackoffAddLambdaLanguageModel lm) {
+        double logprob = 0.0;
+
+        for (String z : sentence.trim().split("\\s+")) {
+            if (!lm.vocab.contains(z)) z = Constants.OOV;
+            logprob += Math.log(lm.prob(z));
+        }
+        logprob += Math.log(lm.prob(Constants.EOS));
+
+        return logprob;
+    }
+
     /**
      * Calculates the probability of a file
      *
@@ -76,7 +103,6 @@ public class SpeechRec {
                 double numberOfWords = reader.nextInt();
 
                 double logprob = sentenceLogLikelihood(reader.nextLine(), lm) / Constants.LOG2;
-
                 // System.out.print(logprob + " ");
 
                 logprob += logLikelihood;
@@ -94,19 +120,102 @@ public class SpeechRec {
             reader.close();
         }
         System.out.println("" + (totalErrors / length) + "\tOVERALL");
-
-        // 10      well you need x number of dollars for the [recipients]
-        // 0.200   -4547.2651240589        9       <s> well you need x number dollars for the [recipient] </s>
-        // 0.500   -4544.29509586806       12      <s> well you need x number dollars for their so at the end </s>
-        // 0.500   -4553.56970138759       12      <s> well you need x number dollars for the rest of the n </s>
-        // 0.100   -4545.24438920497       9       <s> well you need x number dollars for the [recipients] </s>
-        // 0.500   -4550.14474336052       12      <s> well you need x number dollars for the rest of the end </s>
-        // 0.200   -4549.61094619539       9       <s> well you need tax number dollars for the [recipients] </s>
-        // 0.300   -4550.57851366948       10      <s> well you need a fax number dollars for the [recipients] </s>
-        // 0.200   -4546.8073088326        10      <s> well are you need x number dollars for the [recipients] </s>
-        // 0.100   -4545.24438920497       9       <s> well you need x number dollars for the [recipients] </s>
     }
 
+    public static void speechRecBigram(List<String> testfiles, BackoffAddLambdaLanguageModel lm)
+            throws IOException {
+
+
+        double totalErrors = 0;
+        double length = 0;
+
+        for (String testfile : testfiles) {
+            Scanner reader = new Scanner(new File(testfile));
+
+            int actualLength = reader.nextInt();
+
+            length += actualLength;
+            // Discard line
+            reader.nextLine();
+
+            double bestLikelihood = Double.NEGATIVE_INFINITY;
+            double chosenWordErrorRate = -1;
+
+            while (reader.hasNextLine()) {
+                if (reader.hasNextDouble() == false) {
+                    break;
+                }
+
+                double wordErrorRate = reader.nextDouble();
+                double logLikelihood = reader.nextDouble();
+                double numberOfWords = reader.nextInt();
+
+                double logprob = sentenceLogLikelihoodBigram(reader.nextLine(), lm) / Constants.LOG2;
+                // System.out.print(logprob + " ");
+
+                logprob += logLikelihood;
+
+                // System.out.println(" " + logLikelihood);
+                if (logprob > bestLikelihood) {
+                    bestLikelihood = logprob;
+                    chosenWordErrorRate = wordErrorRate;
+                }
+            }
+
+            totalErrors += actualLength * chosenWordErrorRate;
+
+            System.out.println("" + chosenWordErrorRate + "\t" + testfile);
+            reader.close();
+        }
+        System.out.println("Bigram: " + (totalErrors / length) + "\tOVERALL");
+    }
+
+    public static void speechRecUnigram(List<String> testfiles, BackoffAddLambdaLanguageModel lm)
+            throws IOException {
+
+        double totalErrors = 0;
+        double length = 0;
+
+        for (String testfile : testfiles) {
+            Scanner reader = new Scanner(new File(testfile));
+
+            int actualLength = reader.nextInt();
+
+            length += actualLength;
+            // Discard line
+            reader.nextLine();
+
+            double bestLikelihood = Double.NEGATIVE_INFINITY;
+            double chosenWordErrorRate = -1;
+
+            while (reader.hasNextLine()) {
+                if (reader.hasNextDouble() == false) {
+                    break;
+                }
+
+                double wordErrorRate = reader.nextDouble();
+                double logLikelihood = reader.nextDouble();
+                double numberOfWords = reader.nextInt();
+
+                double logprob = sentenceLogLikelihoodUnigram(reader.nextLine(), lm) / Constants.LOG2;
+                // System.out.print(logprob + " ");
+
+                logprob += logLikelihood;
+
+                // System.out.println(" " + logLikelihood);
+                if (logprob > bestLikelihood) {
+                    bestLikelihood = logprob;
+                    chosenWordErrorRate = wordErrorRate;
+                }
+            }
+
+            totalErrors += actualLength * chosenWordErrorRate;
+
+            System.out.println("" + chosenWordErrorRate + "\t" + testfile);
+            reader.close();
+        }
+        System.out.println("Unigram: " + (totalErrors / length) + "\tOVERALL");
+    }
     public static void main(String[] args) {
         if (args.length < 2) {
             help();
@@ -137,6 +246,11 @@ public class SpeechRec {
             files.add(testfile);
         }
         try {
+            if (lm instanceof BackoffAddLambdaLanguageModel) {
+                BackoffAddLambdaLanguageModel model = (BackoffAddLambdaLanguageModel)lm;
+                speechRecUnigram(files, model);
+                speechRecBigram(files, model);
+            }
             speechRec(files, lm);
         } catch (IOException e) {
             System.err.format("warning: error reading %s\n", files);

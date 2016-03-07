@@ -19,6 +19,50 @@ class BackoffAddLambdaLanguageModel extends LanguageModel {
     this.lambda = lambda;
   }
   
+  public double prob(final String x_, final String y_) {
+	String x = vocab.contains(x_) ? x_ : Constants.OOV;
+	String y = vocab.contains(y_) ? y_ : Constants.OOV;
+	final String xy = x + " "  + y;
+	final double xyCount;
+	Integer xyCountInt = tokens.get(xy);
+    if (xyCountInt == null) {
+      xyCount = 0.0;
+    } else {
+      xyCount = (double) xyCountInt;
+    }
+
+    final double yCount;
+    Integer yCountInt = tokens.get(y);
+    if (yCountInt == null) {
+      yCount = 0.0;
+    } else {
+      yCount = (double) yCountInt;
+    }
+
+   	double px = this.prob(x);
+   	double pxy = (xyCount + lambda * vocabSize * px) / (yCount + lambda * vocabSize);
+   	return pxy;
+  }
+
+  public double prob(final String x_) {
+	String x = vocab.contains(x_) ? x_ : Constants.OOV;
+	final double xCount;
+    Integer xCountInt = tokens.get(x);
+    if (xCountInt == null) {
+      xCount = 0.0;
+    } else {
+      xCount = (double) xCountInt;
+    }
+    final double emptyCount;
+    Integer emptyCountInt = tokens.get("");
+    if (emptyCountInt == null) {
+    	emptyCount = 0.0;
+    } else {
+    	emptyCount = (double) emptyCountInt;
+    }
+    return (xCount + lambda) / (emptyCount + lambda * vocabSize);
+  }
+
   /**
    * Computes the trigram probability p(z | x,y )
    * This is yours to implement!

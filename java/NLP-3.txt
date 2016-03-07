@@ -1,0 +1,224 @@
+Hansong Li (hli62@jhu.edu)
+Sihao Lu (slu21@jhu.edu)
+
+Problem 1:
+Running switchboard_small
+For sample 1, we have log probability of -12947.9 and 1686 words, therefore the perplexity is 205.025
+For sample 2, we have log probability of -7895.48 and 978 words, therefore the perplexity is 269.303
+For sample 3, we have log probability of -7985.87 and 985 words, therefore the perplexity is 258.875
+ 
+Running switchboard
+For sample 1, we have log probability of -13343.4 and 1686 words, therefore the perplexity is 241.225
+For sample 2, we have log probability of -8008.25 and 978 words, therefore the perplexity is 291.711
+For sample 3, we have log probability of -8444.72 and 985 words, therefore the perplexity is 380.914
+Here we are getting lower log probability and higher perplexity.  
+
+Problem 3:
+lamda	gen_error	spam_error	Weighted average
+0.3	0.072	0.155	0.099666667
+0.4	0.0777	0.1111	0.088833333
+0.5	0.1	0.11	0.103333333
+0.6	0.111	0.111	0.111
+0.7	0.1222	0.11	0.118133333
+0.8	0.133333	0.1222	0.129622
+1	0.172	0.12	0.154666667
+2	0.283	0.07	0.212
+3	0.455	0.05	0.32
+TestData	0.1222	0.1111	0.1185
+
+A)lowest error rate is 0.088833
+B)Lambda = 0.4
+C)0.1185
+D) 
+We define file with 100 or lower word count to be small and the other to be large. Then running with our lambda = 0.4, we count how many file are recognized incorrectly, grouped by their size. The result is following:
+Gen file recognized as spam:  67.4% small file and 32.6% large file
+Spam file recognized as gen: 80% large file and 20% small file
+We can see clearly that larger files are more easily recognized as gen, whereas smaller files are more easily recognized as spam.
+E) 
+1times	0.0777	0.1111	
+2times	0.1277	0.0833	0.1129
+4times	0.08888	0.083333	0.087031
+8times	0.05555	0.08333	0.06481
+
+
+Problem 4:
+A)If we use V=19999 when we actually have 20000 word types, the UNIFORM probability will add up to a little bit more than 1. That°Øs not good. The ADDL will suffer from the same problem
+B)When lambda = 0, P(z|xy) = c(xyz) / c(xy). This is just calculating by the counts of xy and xyz occurrence in the file, without caring about whether they stick together or not. Therefore, this is no longer 3-gram model
+C)
+If we let c(xyz) = c(xyz°Ø) = 0, then
+P(z|xy) = (lambda*V*P(z|y))/(c(xy)+lambda * V) and 
+P(z°Ø|xy) = (lambda*V*P(z°Ø|y))/(c(xy)+lambda * V)
+We should note here the only thing being different here is P(z|y) and P(z°Ø|y), and these two can totally be different from each other. Therefore, it doesn°Øt follow that P(z|xy) = P(z°Ø|xy)
+If c(xyz) = c(xyz°Ø) = 1, then similarly both probability will only have difference at P(z|y) and P(z°Ø|y) term.
+
+D) because V is the largest number here, so increasing lambda will significantly increase the term lambda * V and therefore put more weight on P(z|y) term. Because P(z|y) is always at most one, lambda*V*P(z|y) would be smaller than lambda*V, therefore the overall P(z|xy) will be smaller with larger lambda.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+Problem5:
+b)
+The error rate we got from using backoffAddLambda model to run TextCat is 0.0685 with lambda = 0.4. This is better than what we got from Problem 3 using just addLambda.
+running FileProb switchboard_small, we got:
+For sample 1, we have cross-entropy of -9910.25
+For sample 2, we have cross-entropy of -5973.34  
+For sample 3, we have cross-entropy of -5912.52 
+Which are better than what we got from Problem 1.
+
+c)
+0.2	0.063888	0.08333	0.070368667
+0.3	0.06388	0.0777	0.068486667
+0.4	0.063888	0.07777	0.068515333
+
+We found that with backoffAddLambda model, the better lambda value would be lambda = 0.3. On the test data, this new lambda has a better error rate by 0.041%. This lambda is smaller than the one for addLambda, because the backing off
+
+Problem 6:
+c)
+Vocabulary size is 30 types including OOV and EOS . Vocabulary size is 30 types including EOS and OOV 992 tokens in total Start optimizing. ....................
+Epoch 1: -3030.124868430468 ...................
+Epoch 2: -2883.338589267844 ....................
+Epoch 3: -2831.077674884064 ....................
+Epoch 4: -2801.5859884480137 ....................
+Epoch 5: -2782.974440589023 ....................
+Epoch 6: -2770.295669093537 ....................
+Epoch 7: -2761.174751662522 ...................
+Epoch 8: -2754.350421439348 ....................
+Epoch 9: -2749.0940951417415 ....................
+Epoch 10: -2744.955874729225
+
+d)
+-------------------------
+We set the learning rate at 0.02. 
+We tried C values 0.05, 0.02, 0.1, 0.5, 0.8, 1, 2, 3. When C = 0.045, the objective value after 10 epoches are the highest.
+
+We tried chars-10, chars-20, chars-40 with test data english/length-100. Their accuracy are 67/70, 69/70 and 70/70 respectively, which shows that larger dimension of vector yields more accurate classification.
+=========================
+ACCURACY WHEN C = 1
+
+18 looked more like en.1K (0.9)
+2 looked more like sp.1K (0.1)
+
+CROSS ENTROPY WHEN C = 1
+
+-451.432	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.00
+-431.923	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.01
+-419.873	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.02
+-414.869	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.03
+-421.947	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.04
+-430.673	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.05
+-409.132	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.06
+-457.224	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.07
+-501.087	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.08
+-431.964	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.09
+-428.076	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.10
+-434.078	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.11
+-395.201	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.12
+-413.769	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.13
+-410.337	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.14
+-437.229	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.15
+-432.825	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.16
+-458.681	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.17
+-385.591	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.18
+-423.035	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.19
+
+
+f)
+The beta value grows from 1.47 to 1.78 in 10 epoches.
+Comparing the results below to the previous question, the cross entropy was -451.432 vs -426.647 at start, and -423.035 vs -420.135 in the end. So I can say there's an improvement in cross entropy. The categorization performance increased by a small amount (+1 item for english-length-100 in test data) but remained the same througout most of the data, possibly due to the small size of dev and test data. Therefore a tiny increase in weight accuracy doesn't necessarily flip the categorization result.
+
+-----------------------
+-444.173	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.00
+-426.647	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.01
+-402.474	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.02
+-415.206	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.03
+-399.896	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.04
+-419.582	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.05
+-399.913	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.06
+-434.334	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.07
+-524.565	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.08
+-430.774	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.09
+-419.961	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.10
+-432.528	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.11
+-377.277	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.12
+-408.993	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.13
+-388.473	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.14
+-433.571	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.15
+-435.464	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.16
+-443.985	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.17
+-363.611	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.18
+-420.135	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.19
+
+ g) vi. "Repeated before" feature
+We can see the weight of repeat-within-10-words increases quickly
+However the test accuracy have no visible increase.
+Surprisingly the cross entropy remained the same as before, even slightly dropped.
+-------------------------
+
+-448.914	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.00
+-427.178	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.01
+-407.221	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.02
+-423.000	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.03
+-403.601	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.04
+-423.793	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.05
+-404.516	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.06
+-441.797	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.07
+-539.391	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.08
+-438.929	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.09
+-425.210	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.10
+-440.228	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.11
+-379.066	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.12
+-413.731	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.13
+-393.592	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.14
+-440.278	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.15
+-440.744	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.16
+-451.201	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.17
+-368.159	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.18
+-424.970	/usr/local/data/cs465/hw-lm/english_spanish/dev/english/length-100/en.100.19
+
+Problem 7
+a)if we know a prior that 1/3 of the test email would be spam, we can use Bayes°Ø theorem to optimize our classification algorithm. By Bayes°Ø theorem,  Posterior = likelihood * prior. Here we have prior that P(spam) = 1/3 and P(gen) = 2/3, we can just modify our program to multiply original probability of a sample being spam by 1/3, and multiply original probability of a sample being gen by 2/3, to get a better estimation.
+b)In this way, this prior probability is only used in test time. So we can actually let the program run, and during run time, adjust this prior assumption by inspecting processed data. 
+
+Problem 8
+a) (\sum_i^N log p(w_i | w_{i-1}, w_{i-2})) + log p(U | w)
+
+Because of log-likelihood, when multiplying the things inside mod, we can get p(U). So they sum up to log p(U).
+
+b) See source.
+
+c) Our accuracy for speech/dev/easy/* are
+
+0.17887624750499	OVERALL (add0.01)
+0.15851497005988024	OVERALL (backoff_add0.01)
+
+Since loglin is too slow to perform, we choose back off add 0.01 as our smoother.
+
+Fairness: we keep the add-value the same because that will affect the value ranges of log likelihood of trigram models. If we compare add1 and backoff_add0.001, that will constitute an unfair comparison.
+
+======================
+The accuracies for back off add 0.01 on speech/test/easy/*:
+
+Unigram: 0.21448275862068966	OVERALL
+Bigram: 0.16350000000000003	OVERALL
+Trigram: 0.14398197492163017	OVERALL
+
+The accuracies for back off add 0.01 on speech/test/unrestricted/*:
+
+Unigram: 0.4167993348115299	OVERALL
+Bigram: 0.39239911308204	OVERALL
+Trigram: 0.3857727272727274	OVERALL
+
+It’s apparent that trigram model works better than bigram, which works better than unigram model.
