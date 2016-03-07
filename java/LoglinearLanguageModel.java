@@ -34,6 +34,13 @@ class LoglinearLanguageModel extends LanguageModel {
     double[][] U, V;
 
     /**
+     * The theta value of the unigram
+     */
+    double beta = 0;
+
+    double repeatWeight = 0;
+
+    /**
      * Construct a log-linear model that is TRAINED on a particular corpus.
      *
      * @param C       The constant that determines the strength of the regularizer.
@@ -151,11 +158,25 @@ class LoglinearLanguageModel extends LanguageModel {
                         showProgress();
                     }
                 }
+
+                double sumBeta = 0;
+                double sumRepeat = 0;
+                double Zxy = this.Z(x, y);
+                for (String word : vocab) {
+                    double prob = this.u(x, y, word) / Zxy;
+                    sumBeta += prob * this.unigramFeature(word);
+                    sumRepeat += prob * this.repeatedWithin10(word);
+                }
+                double gradientBeta = this.unigramFeature(z) - sumBeta - 2 * C / N * beta;
+                double gradientRepeat = this.repeatedWithin10(z) - sumRepeat - 2 * C / N * repeatWeight;
+                beta += gamma * gradientBeta;
+                repeatWeight += gamma * gradientRepeat;
+
                 double f_i = Math.log(this.prob(x, y, z)) - C / N * thetaSquareSum;
                 objective += f_i;
                 t += 1;
             }
-            System.out.println("Epoch " + (e + 1) + ": " + objective);
+            System.out.println("Epoch " + (e + 1) + ": " + objective + "; repeat: " + repeatWeight);
         }
 
         System.err.format("Finished training on %d tokens", tokens.get(""));
@@ -171,6 +192,41 @@ class LoglinearLanguageModel extends LanguageModel {
 
     // Feel free to add other functions as you need.
  
+    private Map<String, Integer> unigramCount = new HashMap<>();
+    private double unigramFeature(String z) {
+        if (unigramCount.get(z) != null) {
+            return Math.log(unigramCount.get(z) + 1.0);
+        }
+        int count = 0;
+        for (int i = 2; i < tokenList.size(); ++i) {
+            String third = tokenList.get(i);
+            if (third.equals(z)) {
+                count++; 
+            }
+        }
+        unigramCount.put(z, count);
+        return Math.log(count + 1.0);
+    }
+
+    private Map<String, Boolean> repeatedBefore = new HashMap<>();
+    private double repeatedWithin10(String z) {
+        if (repeatedBefore.get(z) != null) {
+            return repeatedBefore.get(z) ? 1 : 0;
+        }
+        for (int i = 2; i < tokenList.size(); i++) {
+            if (z.equals(tokenList.get(i))) {
+                for (int j = i - 1; j >= 0; j--) {
+                    if (tokenList.get(j).equals(z)) {
+                        repeatedBefore.put(z, true);
+                        return 1;
+                    }
+                }
+            }
+        }
+        repeatedBefore.put(z, false);
+        return 0;
+    }
+
     private double Z(String x, String y) {
         double sum = 0;
         for (String word : vocab) {
@@ -193,6 +249,8 @@ class LoglinearLanguageModel extends LanguageModel {
                 sum += U[j][m] * xVec[j] * zVec[m] + V[j][m] * yVec[j] * zVec[m];
             }
         }
+        sum += beta * this.unigramFeature(z);
+        sum += repeatWeight * this.repeatedWithin10(z);
         return Math.exp(sum);
     }
 }

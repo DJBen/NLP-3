@@ -73,7 +73,15 @@ class BackoffAddLambdaLanguageModel extends LanguageModel {
 	      yCount = (double) yCountInt;
 	    }
 	    
-	    double pz = zCount / vocabSize;
+	    final double emptyCount;
+	    Integer emptyCountInt = tokens.get("");
+	    if (emptyCountInt == null) {
+	    	emptyCount = 0.0;
+	    } else {
+	    	emptyCount = (double) emptyCountInt;
+	    }
+	    
+	    double pz = (zCount + lambda) / (emptyCount + lambda * vocabSize);
 	    double pzy = (yzCount + lambda * vocabSize * pz) / (yCount + lambda * vocabSize);
 	    double pzxy = (xyzCount + lambda * vocabSize * pzy) / (xyCount + lambda * vocabSize);
 	    return pzxy;
